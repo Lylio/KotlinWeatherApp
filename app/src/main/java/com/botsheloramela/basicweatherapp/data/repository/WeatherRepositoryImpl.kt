@@ -18,4 +18,8 @@ class WeatherRepositoryImpl @Inject constructor(
     override suspend fun getCurrentWeather(latitude: Double, longitude: Double): CurrentWeather {
         return weatherApi.getCurrentWeather(latitude, longitude)
     }
+
+    override suspend fun getCurrentWeatherByCity(city: String): CurrentWeather {
+        return weatherApi.getCurrentWeatherByCity(city)
+    }
 }

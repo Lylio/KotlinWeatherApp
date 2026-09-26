@@ -37,6 +37,16 @@ import com.botsheloramela.basicweatherapp.utils.Constants.SCREEN_PADDING
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.ImeAction
 
 @OptIn(ExperimentalPermissionsApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -71,7 +81,11 @@ fun HomeView(
 
             if (currentWeather != null) {
                 val hourlyForecast: List<WeatherItem>? = viewModel.getCurrentAndNextForecasts()
-                HomeScreenContent(currentWeather = currentWeather!!, hourlyForecast = hourlyForecast)
+                HomeScreenContent(
+                    currentWeather = currentWeather!!,
+                    hourlyForecast = hourlyForecast,
+                    viewModel = viewModel
+                )
             } else if (errorMessage != null) {
                 Text(text = "Error: $errorMessage", color = MaterialTheme.colorScheme.error)
             } else {
@@ -96,7 +110,8 @@ fun HomeView(
 @Composable
 fun HomeScreenContent(
     currentWeather: CurrentWeather,
-    hourlyForecast: List<WeatherItem>?
+    hourlyForecast: List<WeatherItem>?,
+    viewModel: HomeViewModel
 ) {
 
     var weatherIconIds: List<Int> = emptyList()
@@ -122,6 +137,51 @@ fun HomeScreenContent(
             .fillMaxSize()
             .padding(SCREEN_PADDING)
     ) {
+        var searchQuery by viewModel.searchQuery
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = androidx.compose.ui.text.TextStyle(
+                color = androidx.compose.ui.graphics.Color.White
+            ),
+            label = {
+                Text(
+                    text = "Search city",
+                    color = androidx.compose.ui.graphics.Color.White
+                )
+            },
+            placeholder = {
+                Text(
+                    text = "Glasgow, Edinburgh, London...",
+                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f)
+                )
+            },
+            singleLine = true,
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        viewModel.searchCity(searchQuery)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search"
+                    )
+                }
+            },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    viewModel.searchCity(searchQuery)
+                }
+            )
+        )
+
+        Spacer(modifier = Modifier.padding(8.dp))
         MainWeatherCard(
             currentTemp = currentWeather.main.temp.toInt(),
             feelsLikeTemp = currentWeather.main.feels_like.toInt(),

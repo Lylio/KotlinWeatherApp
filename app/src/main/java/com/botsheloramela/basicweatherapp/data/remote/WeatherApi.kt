@@ -26,4 +26,11 @@ interface WeatherApi {
         @Query("appid") apiKey: String = API_KEY,
         @Query("units") units: String = "metric"
     ): CurrentWeather
+
+    @GET("weather")
+    suspend fun getCurrentWeatherByCity(
+        @Query("q") city: String,
+        @Query("appid") apiKey: String = API_KEY,
+        @Query("units") units: String = "metric"
+    ): CurrentWeather
 }

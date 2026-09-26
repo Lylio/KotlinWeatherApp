@@ -18,4 +18,6 @@ interface WeatherRepository {
      * Get the current weather for a given latitude and longitude
      */
     suspend fun getCurrentWeather(latitude: Double, longitude: Double): CurrentWeather
+
+    suspend fun getCurrentWeatherByCity(city: String): CurrentWeather
 }

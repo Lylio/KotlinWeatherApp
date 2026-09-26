@@ -17,16 +17,25 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
+import com.botsheloramela.basicweatherapp.domain.usecase.GetCurrentWeatherByCityUseCase
+
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getWeatherForecastUseCase: GetWeatherForecastUseCase,
     private val getDeviceLocationUseCase: GetDeviceLocationUseCase,
-    private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase
+    private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase,
+    private val getCurrentWeatherByCityUseCase: GetCurrentWeatherByCityUseCase
 ): ViewModel() {
+
     val locationState = mutableStateOf<Location?>(null)
     private val weatherForecastState = mutableStateOf<WeatherForecast?>(null)
     val currentWeatherState = mutableStateOf<CurrentWeather?>(null)
+
+    // City search state
+    val searchQuery = mutableStateOf("")
+    val searchError = mutableStateOf<String?>(null)
+    val isSearching = mutableStateOf(false)
 
     /**
      * Fetch the device location.
@@ -70,10 +79,48 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Fetch weather data for a city entered by the user.
+     */
+    fun searchCity(city: String) {
+
+        if (city.isBlank()) {
+            return
+        }
+
+        viewModelScope.launch {
+
+            isSearching.value = true
+            searchError.value = null
+
+            try {
+                val currentWeather =
+                    getCurrentWeatherByCityUseCase(city.trim())
+
+                currentWeatherState.value = currentWeather
+
+                val weatherForecast = getWeatherForecastUseCase(
+                    latitude = currentWeather.coord.lat,
+                    longitude = currentWeather.coord.lon
+                )
+
+                weatherForecastState.value = weatherForecast
+
+            } catch (e: Exception) {
+                searchError.value = "Could not find \"$city\""
+            } finally {
+                isSearching.value = false
+            }
+        }
+    }
+
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getCurrentAndNextForecasts(): List<WeatherItem>? {
         val currentTime = Instant.now().epochSecond
+
+
 
         // Filter the list to get the forecast closest to the current time and the next 4 forecasts
         val sortedForecasts = weatherForecastState.value?.list?.sortedBy { DateTimeUtils.parseDtTxtToTimestamp(it.dt_txt) }
